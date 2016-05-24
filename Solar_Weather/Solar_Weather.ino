@@ -50,6 +50,7 @@
 #include <MySensor.h>
 #include <BH1750.h>
 #include <Wire.h>
+#include "SDL_Weather_80422.h"
 
 #define CHILD_CONFIG 103
 
@@ -69,12 +70,19 @@ MyMessage msgLux(CHILD_ID_LIGHT, V_LIGHT_LEVEL);
 //MyMessage msgLux(CHILD_ID_LIGHT, V_LEVEL);
 uint16_t lastlux = 0;
 
+
+/* Obsolete using own interrupt routines using the SDL_80422-lib?
 #define DIGITAL_INPUT_SENSOR1 2   // The digital input you attached your motion sensor.  (Only 2 and 3 generates interrupt!)
 #define INTERRUPT1 DIGITAL_INPUT_SENSOR1-2 // Usually the interrupt = pin -2 (on uno/nano anyway)
 MyMessage msg_M1(CHILD_ID_M1, V_TRIPPED);
 #define DIGITAL_INPUT_SENSOR2 3   // The digital input you attached your motion sensor.  (Only 2 and 3 generates interrupt!)
 #define INTERRUPT2 DIGITAL_INPUT_SENSOR2-2 // Usually the interrupt = pin -2 (on uno/nano anyway)
-MyMessage msg_M2(CHILD_ID_M2, V_TRIPPED);
+MyMessage msg_M2(CHILD_ID_M2, V_TRIPPED);*/
+
+#define pinAnem    3  // Anenometer connected to pin 18 - Int 5 - Mega   / Uno pin 2
+#define pinRain    2  // Gauge connected to pin 2 - Int 0 - Mega   / Uno Pin 3 
+#define intAnem    1  // int 0 (check for Uno)
+#define intRain    0  // int 1
 
 MyMessage msgBatLux(CHILD_ID_BATT, V_LIGHT_LEVEL);
 MyMessage msgWindSpeed(CHILD_ID_WIND, V_WIND);
@@ -84,17 +92,29 @@ MyMessage msgWDirection(CHILD_ID_WIND, V_DIRECTION);
 MyMessage msgRain(CHILD_ID_RAIN, V_RAIN);
 MyMessage msgRainrate(CHILD_ID_RAIN, V_RAINRATE);
 
+// initialize SDL_Weather_80422 library
+SDL_Weather_80422 weatherStation(pinAnem, pinRain, intAnem, intRain, A0, SDL_MODE_INTERNAL_AD);
+float currentWindSpeed;
+float currentWindGust;
+float totalRain;
+
+//really needed???? SDL
+uint8_t i;
+
 void setup()
 {
   analogReference(INTERNAL);
   lightSensor.begin();
   metric = getConfig().isMetric;
+  /*obsolete using SDL-lib?
   pinMode(DIGITAL_INPUT_SENSOR1, INPUT);      // sets the motion sensor digital pin as input
   attachInterrupt(digitalPinToInterrupt(DIGITAL_INPUT_SENSOR1), raincounter, FALLING);
   pinMode(DIGITAL_INPUT_SENSOR2, INPUT);      // sets the motion sensor digital pin as input
-  attachInterrupt(digitalPinToInterrupt(DIGITAL_INPUT_SENSOR2), windcounter, FALLING);
-
+  attachInterrupt(digitalPinToInterrupt(DIGITAL_INPUT_SENSOR2), windcounter, FALLING);*/
 };
+  weatherStation.setWindMode(SDL_MODE_SAMPLE, 5.0);
+  //weatherStation.setWindMode(SDL_MODE_DELAY, 5.0);
+      totalRain = 0.0;
 
 void presentation()  {
   // Send the sketch version information to the gateway and Controller
@@ -109,6 +129,18 @@ void presentation()  {
 void loop()
 {
   //functions for windspeed, gust and direction needed incl. sending
+  currentWindSpeed = weatherStation.current_wind_speed()/1.6;
+  currentWindGust = weatherStation.get_wind_gust()/1.6;
+  totalRain = totalRain + weatherStation.get_current_rain_total()/25.4;
+  Serial.print("rain_total=");
+  Serial.print(totalRain);
+  Serial.print(""" wind_speed=");
+  Serial.print(currentWindSpeed);
+    Serial.print("MPH wind_gust=");
+  Serial.print(currentWindGust);
+  Serial.print("MPH wind_direction=");
+  Serial.println(weatherStation.current_wind_direction());
+  
   //dto. for battery level
   
 
