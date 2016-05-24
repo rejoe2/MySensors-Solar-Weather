@@ -53,6 +53,11 @@
 
 #define CHILD_CONFIG 103
 
+#define CHILD_ID_LIGHT 1
+#define CHILD_ID_RAIN 2
+#define CHILD_ID_WIND 3
+#define CHILD_ID_BATT 4
+
 const unsigned long SLEEP_TIME = 180000;
 
 BH1750 lightSensor;
@@ -66,16 +71,22 @@ uint16_t lastlux = 0;
 
 #define DIGITAL_INPUT_SENSOR1 2   // The digital input you attached your motion sensor.  (Only 2 and 3 generates interrupt!)
 #define INTERRUPT1 DIGITAL_INPUT_SENSOR1-2 // Usually the interrupt = pin -2 (on uno/nano anyway)
-#define CHILD_ID_M1 20   // Id of the first motion sensor child
 MyMessage msg_M1(CHILD_ID_M1, V_TRIPPED);
 #define DIGITAL_INPUT_SENSOR2 3   // The digital input you attached your motion sensor.  (Only 2 and 3 generates interrupt!)
 #define INTERRUPT2 DIGITAL_INPUT_SENSOR2-2 // Usually the interrupt = pin -2 (on uno/nano anyway)
-#define CHILD_ID_M2 21   // Id of the 2. sensor child
 MyMessage msg_M2(CHILD_ID_M2, V_TRIPPED);
 
+MyMessage msgBatLux(CHILD_ID_BATT, V_LIGHT_LEVEL);
+MyMessage msgWindSpeed(CHILD_ID_WIND, V_WIND);
+MyMessage msgWGust(CHILD_ID_WIND, V_GUST);
+//Probably needs to be mapped manually within FHEM
+MyMessage msgWDirection(CHILD_ID_WIND, V_DIRECTION);   
+MyMessage msgRain(CHILD_ID_RAIN, V_RAIN);
+MyMessage msgRainrate(CHILD_ID_RAIN, V_RAINRATE);
 
 void setup()
 {
+  analogReference(INTERNAL);
   lightSensor.begin();
   metric = getConfig().isMetric;
   pinMode(DIGITAL_INPUT_SENSOR1, INPUT);      // sets the motion sensor digital pin as input
