@@ -150,5 +150,36 @@ void windcounter() {
   send(msg_M2.set(tripped2 ? "1" : "0"));
 };
 
-
+// Wind Meter https://github.com/chiemseesurfer/arduinoWeatherstation/blob/master/weatherstation/weatherstation.ino
+    
+    float windmeter()
+    {
+        windmeterStart = millis(); // Actual start time measuringMessung
+        windmeterStartAlt = windmeterStart; // Save start time
+    
+        windSpeedPinCounter = 0; // Set pulse counter to 0
+        windSpeedPinStatusAlt = HIGH; // Set puls status High
+    
+        while ((windmeterStart - windmeterStartAlt) <= windmeterTime) // until 10000 ms (10 Seconds) ..
+        {
+            windSpeedPinStatus = digitalRead(windSpeedPin); // Read input pin 2
+            if (windSpeedPinStatus != windSpeedPinStatusAlt) // When the pin status changed
+            {
+                if (windSpeedPinStatus == HIGH) // When status - HIGH
+          {
+              windSpeedPinCounter++; // Counter + 1
+          }
+      }
+      windSpeedPinStatusAlt = windSpeedPinStatus; // Save status for next loop
+      windmeterStart = millis(); // Actual time
+  }
+ 
+  windSpeed =  ((windSpeedPinCounter * 24) / 10) + 0.5; //  WindSpeed - one Pulse ~ 2,4 km/h, 
+  windSpeed = (windSpeed / (windmeterTime / 1000)); // Devided in measure time in seconds
+  Serial.print("wind Speed : ");
+  Serial.println(windSpeed);    
+  knoten = windSpeed / 1.852; //knot's
+ 
+  return windSpeed;
+}
 
