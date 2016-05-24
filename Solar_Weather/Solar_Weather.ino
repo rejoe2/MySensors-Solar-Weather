@@ -83,6 +83,8 @@ MyMessage msg_M2(CHILD_ID_M2, V_TRIPPED);*/
 #define pinRain    2  // Gauge connected to pin 2 - Int 0 - Mega   / Uno Pin 3 
 #define intAnem    1  // int 0 (check for Uno)
 #define intRain    0  // int 1
+#define pinWinddir A1
+#define pinBattery A0
 
 MyMessage msgBatLux(CHILD_ID_BATT, V_LIGHT_LEVEL);
 MyMessage msgWindSpeed(CHILD_ID_WIND, V_WIND);
@@ -93,13 +95,17 @@ MyMessage msgRain(CHILD_ID_RAIN, V_RAIN);
 MyMessage msgRainrate(CHILD_ID_RAIN, V_RAINRATE);
 
 // initialize SDL_Weather_80422 library
-SDL_Weather_80422 weatherStation(pinAnem, pinRain, intAnem, intRain, A0, SDL_MODE_INTERNAL_AD);
+SDL_Weather_80422 weatherStation(pinAnem, pinRain, intAnem, intRain, pinWinddir, SDL_MODE_INTERNAL_AD);
 float currentWindSpeed;
 float currentWindGust;
 float totalRain;
 
 //really needed???? SDL
 uint8_t i;
+
+int batteryBasement = 800;
+float batteryConstant = 100.0 / (1023 - batteryBasement);
+
 
 void setup()
 {
@@ -122,8 +128,9 @@ void presentation()  {
 
   // Register all sensors to gateway (they will be created as child devices)
   present(CHILD_ID_LIGHT, S_LIGHT_LEVEL);
-  present(BARO_CHILD, S_BARO);
-  present(TEMP_CHILD, S_TEMP);
+  present(CHILD_ID_WIND, S_WIND);
+  present(CHILD_ID_RAIN, S_RAIN);
+  present(CHILD_ID_BATT, S_LIGHT_LEVEL);
 };
 
 void loop()
@@ -142,7 +149,13 @@ void loop()
   Serial.println(weatherStation.current_wind_direction());
   
   //dto. for battery level
-  
+  int sensorValue = analogRead(pinBattery);
+  int batteryPcnt = (sensorValue - batteryBasement) * batteryConstant;
+  if (lastBatteryPcnt != batteryPcnt) {
+     send(msgBattery(batteryPcnt));
+  lastBatteryPcnt = batteryPcnt;
+  }
+
 
   uint16_t lux = lightSensor.readLightLevel();// Get Lux value
 #ifdef MY_DEBUG
